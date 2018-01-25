@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>canvas</title>
+  <style type="text/css">
+    *{margin: 0; padding: 0;}
+    body{
+      overflow:hidden;
+    }
+    #canvas{
+      display: block;
+      background: #000;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <script type="text/javascript">
+    // 请求帧动画
+    window.requestAnimationFrame = (function() {
+      return window.requestAnimationFrame ||
+          window.webkitRequestAnimationFrame ||
+          window.mozRequestAnimationFrame ||
+          function(callpack) {
+            window.setTimeout(callpack, 1000 / 60);
+          };
+    })();
+    var canvas = document.getElementById("canvas");
+    var cxt = canvas.getContext("2d");   /*设置画笔在 2d 环境下*/
+    var w, h;
+    var num = 200;  // 定义粒子的数量
+    var data = [];  // 存储粉点位置的数据
+    var move = {};  // 存储鼠标位置数据
+    //window.onresize = init;
+
+    init();
+    // 页面初始化
+    function init() {
+      //data = [];
+      //move = {};
+      // 实现 canvas 和浏览器宽高度 等 宽高
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight;
+      // 粉点位置，运动速度增量
+      for (var i = 0; i < num; i++) {  // 循环创建粉点
+        data[i] = {x:Math.random()*w, y:Math.random()*h,
+                   cX:Math.random()*0.6 - 0.3, cY:Math.random()*0.6 - 0.3};
+        cricle(data[i].x, data[i].y);
+      }
+    }
+    // 绘制粉色小点
+    function cricle(x, y) {
+      cxt.save();
+      cxt.fillStyle = "pink";
+      cxt.beginPath();
+      cxt.arc(x, y, 1, Math.PI*2, false);
+      cxt.closePath();
+      cxt.fill();
+      cxt.restore();
+    }
+    // 粉点运动及粉点连线
+    !function draw() {
+      cxt.clearRect(0, 0, w, h);  // 先清除画布
+      for (var i = 0; i < num; i++) {  // 当前的点
+        data[i].x += data[i].cX;
+        data[i].y += data[i].cY;
+        // 边界值判断
+        if(data[i].x > w || data[i].x < 0) data[i].cX = - data[i].cX;
+        if(data[i].y > h || data[i].y < 0) data[i].cY = - data[i].cY;
+        cricle(data[i].x, data[i].y);
+        // 用勾股定理来判断是否达到连线条件
+        for (var j = i + 1; j < num; j++) {  // 下一个点
+          if((data[i].x - data[j].x) * (data[i].x - data[j].x) +
+             (data[i].y - data[j].y) * (data[i].y - data[j].y) <= 50 * 50) {
+            // 绘制的线条
+            line(data[i].x, data[i].y, data[j].x, data[j].y, false);
+          }
+          // 判断鼠标位置
+          if(move.x) {
+            if((data[i].x - move.x) * (data[i].x - move.x) +
+              (data[i].y - move.y) * (data[i].y - move.y) <= 100 * 100) {
+              line(data[i].x, data[i].y, move.x, move.y, true);
+            }
+          }
+        }
+      }
+      /*setInterval(function() {  // 用一个定时器来解决200个定时器     请求帧动画：
+        draw();
+      }, 130);*/
+      window.requestAnimationFrame(draw);
+    }();
+    // 绘制线条
+    function line(x1, y1, x2, y2, isMove) {
+      var color = cxt.createLinearGradient(x1, y1, x2, y2);
+      if(!isMove) {  // 如果是真(没有移入)的话   【上面是 false】
+        color.addColorStop(0, "yellow");
+        color.addColorStop(1, "pink");
+      }else {
+        color.addColorStop(0, "red");
+        color.addColorStop(0.5, "#bfa");
+        color.addColorStop(1, "blue");
+      }
+      cxt.save();
+      cxt.strokeStyle = color;
+      cxt.beginPath();
+      cxt.moveTo(x1, y1);
+      cxt.lineTo(x2, y2);
+      cxt.stroke();
+      cxt.restore();
+    }
+    // 移入鼠标进行连线
+    document.onmousemove = function(e) {
+      // 获取鼠标坐标
+      move.x = e.clientX;
+      move.y = e.clientY;
+    }
+
+  </script>
+</body>
+</html>
